@@ -359,6 +359,7 @@ class FollowTest(TestCase):
         self.assertIn(self.post, response.context['page_obj'])
 
     def test_new_post_nofollow_showing(self):
-        """Новая запись пользователя не появляется в ленте тех, кто не подписан"""
+        """Новая запись пользователя не появляется
+         в ленте тех, кто не подписан"""
         response = self.authorized_client.get(reverse('posts:follow_index'))
         self.assertNotIn(self.post, response.context['page_obj'])
