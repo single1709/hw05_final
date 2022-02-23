@@ -76,7 +76,7 @@ class PaginatorViewsTest(TestCase):
         objs = (Post(
             text=f'Тестовый текст {i}',
             author=cls.author,
-            group=cls.group,) for i in range(13)
+            group=cls.group, ) for i in range(13)
         )
         cls.post = Post.objects.bulk_create(objs)
 
@@ -191,7 +191,6 @@ class CreatePostTest(TestCase):
             group=cls.group,
         )
 
-
     def test_correct_post_create_index(self):
         """Проверяем что пост после создания появится на главной странице сайта,
         на странице выбранной группы,в профайле пользователя"""
@@ -214,6 +213,7 @@ class CreatePostTest(TestCase):
                     response.context['page_obj'][0],
                     "Пост не появился на странице"
                 )
+
 
 class CreateCommentTest(TestCase):
     @classmethod
@@ -262,11 +262,12 @@ class CreateCommentTest(TestCase):
             data=form_data,
             follow=True
         )
-        self.assertEqual(Comment.objects.count(), comments_count+2)
+        self.assertEqual(Comment.objects.count(), comments_count + 2)
 
         last_comment = Comment.objects.order_by('created').last()
         self.assertEqual(last_comment.text, form_data['text'])
         self.assertEqual(last_comment.author, self.author)
+
 
 class CacheTest(TestCase):
     @classmethod
@@ -292,7 +293,7 @@ class CacheTest(TestCase):
         """Проверяем работу кеша"""
         posts_count = Post.objects.count()
         response = self.authorized_client_author.get(reverse('posts:index'))
-        cache.set('index_page', response.context['page_obj'],20)
+        cache.set('index_page', response.context['page_obj'], 20)
 
         Post.objects.create(
             text='Тестовый текст2',
@@ -301,15 +302,14 @@ class CacheTest(TestCase):
         )
         self.assertEqual(len(cache.get('index_page')), posts_count)
 
-
         response = self.authorized_client_author.get(reverse('posts:index'))
-        self.assertEqual(len(response.context['page_obj']), posts_count+1)
+        self.assertEqual(len(response.context['page_obj']), posts_count + 1)
+
 
 class FollowTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-
 
         cls.user = User.objects.create_user(username='user')
         cls.author = User.objects.create_user(username='author')
@@ -326,8 +326,6 @@ class FollowTest(TestCase):
             author=cls.author,
             group=cls.group,
         )
-
-
 
     def test_follow_create(self):
         """Проверяем что авторизованный пользователь может
@@ -347,7 +345,7 @@ class FollowTest(TestCase):
             author=self.author,
         )
         count_follow = Follow.objects.count()
-        Follow.objects.filter(user=self.user, author=self.author,).delete()
+        Follow.objects.filter(user=self.user, author=self.author, ).delete()
         self.assertEqual(Follow.objects.count(), count_follow - 1)
 
     def test_new_post_follow_showing(self):
@@ -364,9 +362,3 @@ class FollowTest(TestCase):
         """Новая запись пользователя не появляется в ленте тех, кто не подписан"""
         response = self.authorized_client.get(reverse('posts:follow_index'))
         self.assertNotIn(self.post, response.context['page_obj'])
-
-
-
-
-
-

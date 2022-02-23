@@ -14,6 +14,7 @@ from ..models import Post, Group
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 User = get_user_model()
 
+
 @override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
 class TaskCreateFormTests(TestCase):
     @classmethod
@@ -54,7 +55,6 @@ class TaskCreateFormTests(TestCase):
         super().tearDownClass()
         shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
 
-
     def test_create_post(self):
         """Проверка формы создания поста"""
 
@@ -87,7 +87,6 @@ class TaskCreateFormTests(TestCase):
         self.assertEqual(new_post.group, self.post.group)
         self.assertIsInstance(new_post.image, ImageFieldFile)
 
-
     def test_post_img_context(self):
         pages_with_img = (
             reverse('posts:index'),
@@ -98,9 +97,14 @@ class TaskCreateFormTests(TestCase):
         for page in pages_with_img:
             with self.subTest(page=page):
                 response = self.authorized_client_author.get(page)
-                self.assertIsInstance(response.context["page_obj"][0].image, ImageFieldFile)
+                self.assertIsInstance(
+                    response.context["page_obj"][0].image,
+                    ImageFieldFile
+                )
 
-        response = self.authorized_client_author.get(reverse('posts:post_detail', kwargs={'post_id': self.post.id}))
+        response = self.authorized_client_author.get(
+            reverse('posts:post_detail', kwargs={'post_id': self.post.id})
+        )
         self.assertIsInstance(response.context["post"].image, ImageFieldFile)
 
     def test_edit_post(self):

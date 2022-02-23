@@ -51,6 +51,7 @@ class Post(models.Model):
         verbose_name = 'Пост'
         verbose_name_plural = 'Посты'
 
+
 class Comment(models.Model):
     text = models.TextField(
         'Текст комментария',
@@ -76,6 +77,7 @@ class Comment(models.Model):
     def __str__(self):
         return self.text[:15]
 
+
 class Follow(models.Model):
     user = models.ForeignKey(
         User,
@@ -89,4 +91,3 @@ class Follow(models.Model):
         verbose_name='Автор',
         related_name='following',
     )
-
