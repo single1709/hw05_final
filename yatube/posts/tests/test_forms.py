@@ -91,7 +91,10 @@ class TaskCreateFormTests(TestCase):
         pages_with_img = (
             reverse('posts:index'),
             reverse('posts:group_list', kwargs={'slug': self.group.slug}),
-            reverse('posts:profile', kwargs={'username': self.author.username}),
+            reverse(
+                'posts:profile',
+                kwargs={'username': self.author.username}
+            ),
         )
 
         for page in pages_with_img:
