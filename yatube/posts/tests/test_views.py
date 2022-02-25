@@ -82,11 +82,10 @@ class PaginatorViewsTest(TestCase):
 
     def test_paginator(self):
         """Проверяем, что Paginator работает корректно"""
-
         pages_names = (
             reverse('posts:index'),
             reverse('posts:group_list', kwargs={'slug': self.group.slug}),
-            reverse('posts:profile', kwargs={'username': self.author.username})
+            reverse('posts:profile', kwargs={'username': self.author.username}),
         )
 
         for name_page in pages_names:
@@ -211,7 +210,7 @@ class CreatePostTest(TestCase):
                 response = self.authorized_client_author.get(name_page)
                 self.assertTrue(
                     response.context['page_obj'][0],
-                    "Пост не появился на странице"
+                    'Пост не появился на странице'
                 )
 
 
@@ -238,18 +237,20 @@ class CreateCommentTest(TestCase):
     def test_create_comment(self):
         """Проверяем что после успешной отправки комментарий
          появляется на странице поста"""
-
-        comments_count = Comment.objects.count()
         comment = Comment.objects.create(
             text='Тестовый текст комментария',
             post=self.post,
             author=self.author,
-
         )
         response = self.authorized_client_author.get(
             reverse('posts:post_detail', kwargs={'post_id': self.post.id})
         )
         self.assertIn(comment, response.context['comments'])
+
+    def test_comment_authorized_client(self):
+        """Проверяем что комментировать посты может
+         только авторизованный пользователь"""
+        comments_count = Comment.objects.count()
 
         form_data = {
             'text': 'Тестовый текст комментария 2',
@@ -258,11 +259,12 @@ class CreateCommentTest(TestCase):
         self.authorized_client_author.post(
             reverse(
                 'posts:add_comment',
-                kwargs={'post_id': self.post.id}),
+                kwargs={'post_id': self.post.id}
+            ),
             data=form_data,
             follow=True
         )
-        self.assertEqual(Comment.objects.count(), comments_count + 2)
+        self.assertEqual(Comment.objects.count(), comments_count + 1)
 
         last_comment = Comment.objects.order_by('created').last()
         self.assertEqual(last_comment.text, form_data['text'])
@@ -289,8 +291,8 @@ class CacheTest(TestCase):
             group=cls.group,
         )
 
-    def test_cache_index(self):
-        """Проверяем работу кеша"""
+    def test_yes_cache_index(self):
+        """Проверяем работу с кешем"""
         posts_count = Post.objects.count()
         response = self.authorized_client_author.get(reverse('posts:index'))
         cache.set('index_page', response.context['page_obj'], 20)
@@ -300,10 +302,32 @@ class CacheTest(TestCase):
             author=self.author,
             group=self.group,
         )
-        self.assertEqual(len(cache.get('index_page')), posts_count)
-
         response = self.authorized_client_author.get(reverse('posts:index'))
-        self.assertEqual(len(response.context['page_obj']), posts_count + 1)
+        self.assertEqual(len(cache.get(
+            'index_page',
+            response.context['page_obj'])
+        ), posts_count)
+
+        cache.clear()
+
+    def test_no_cache_index(self):
+        """Проверяем работу с кешем"""
+        posts_count = Post.objects.count()
+        response = self.authorized_client_author.get(reverse('posts:index'))
+        cache.set('index_page', response.context['page_obj'], 20)
+
+        Post.objects.create(
+            text='Тестовый текст2',
+            author=self.author,
+            group=self.group,
+        )
+
+        cache.clear()
+        response = self.authorized_client_author.get(reverse('posts:index'))
+        self.assertEqual(len(cache.get(
+            'index_page',
+            response.context['page_obj'])
+        ), posts_count + 1)
 
 
 class FollowTest(TestCase):
@@ -331,29 +355,50 @@ class FollowTest(TestCase):
         """Проверяем что авторизованный пользователь может
          подписываться на других пользователей"""
         count_follow = Follow.objects.count()
-        Follow.objects.create(
-            user=self.user,
-            author=self.author,
+        self.authorized_client.get(
+            reverse(
+                'posts:profile_follow',
+                kwargs={'username': self.author}
+            )
+        )
+        response = self.authorized_client.get(
+            reverse('posts:follow_index')
         )
         self.assertEqual(Follow.objects.count(), count_follow + 1)
+        self.assertEqual(self.author, response.context['page_obj'][0].author)
+        self.assertEqual(Follow.objects.filter(
+            user=self.user,
+            author=self.author
+        ).exists(), True)
 
     def test_follow_delete(self):
         """Проверяем что авторизованный пользователь может
         удалять пользователей из подписок"""
-        Follow.objects.create(
-            user=self.user,
-            author=self.author,
+        self.authorized_client.get(
+            reverse(
+                'posts:profile_follow',
+                kwargs={'username': self.author}
+            )
         )
         count_follow = Follow.objects.count()
-        Follow.objects.filter(user=self.user, author=self.author, ).delete()
+        Follow.objects.filter(
+            user=self.user,
+            author=self.author
+        ).delete()
         self.assertEqual(Follow.objects.count(), count_follow - 1)
+        self.assertEqual(Follow.objects.filter(
+            user=self.user,
+            author=self.author
+        ).exists(), False)
 
     def test_new_post_follow_showing(self):
         """Новая запись пользователя появляется в ленте тех, кто на него
          подписан"""
-        Follow.objects.create(
-            user=self.user,
-            author=self.author,
+        self.authorized_client.get(
+            reverse(
+                'posts:profile_follow',
+                kwargs={'username': self.author}
+            )
         )
         response = self.authorized_client.get(reverse('posts:follow_index'))
         self.assertIn(self.post, response.context['page_obj'])
@@ -363,3 +408,8 @@ class FollowTest(TestCase):
          в ленте тех, кто не подписан"""
         response = self.authorized_client.get(reverse('posts:follow_index'))
         self.assertNotIn(self.post, response.context['page_obj'])
+
+    def test_urls_correct_new_template_404(self):
+        """Проверка, что страница 404 отдает кастомный шаблон"""
+        response = self.authorized_client.get('unexisting_page/')
+        self.assertTemplateUsed(response, 'core/404.html')

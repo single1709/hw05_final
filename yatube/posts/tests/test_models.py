@@ -29,11 +29,11 @@ class PostModelTest(TestCase):
         self.assertEqual(
             str(post),
             post.text[:self.COUNT_POSTS],
-            "Некорректно работает работает __str__"
+            'Некорректно работает работает __str__'
         )
         group = PostModelTest.group
         self.assertEqual(
             str(group),
             group.title,
-            "Некорректно работает работает __str__"
+            'Некорректно работает работает __str__'
         )
