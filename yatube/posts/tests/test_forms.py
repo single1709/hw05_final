@@ -10,7 +10,6 @@ from django.db.models.fields.files import ImageFieldFile
 
 from ..models import Post, Group
 
-
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 User = get_user_model()
 
