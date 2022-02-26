@@ -369,10 +369,12 @@ class FollowTest(TestCase):
         )
         self.assertEqual(Follow.objects.count(), count_follow + 1)
         self.assertEqual(self.author, response.context['page_obj'][0].author)
-        self.assertEqual(Follow.objects.filter(
-            user=self.user,
-            author=self.author
-        ).exists(), True)
+        self.assertTrue(
+            Follow.objects.filter(
+                user=self.user,
+                author=self.author
+            ).exists()
+        )
 
     def test_follow_delete(self):
         """Проверяем что авторизованный пользователь может
@@ -389,10 +391,12 @@ class FollowTest(TestCase):
             author=self.author
         ).delete()
         self.assertEqual(Follow.objects.count(), count_follow - 1)
-        self.assertEqual(Follow.objects.filter(
-            user=self.user,
-            author=self.author
-        ).exists(), False)
+        self.assertFalse(
+            Follow.objects.filter(
+                user=self.user,
+                author=self.author
+            ).exists()
+        )
 
     def test_new_post_follow_showing(self):
         """Новая запись пользователя появляется в ленте тех, кто на него

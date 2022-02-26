@@ -128,8 +128,6 @@ class TaskCreateFormTests(TestCase):
         )
 
         edit_post = Post.objects.get(id=self.post.id)
-        self.assertTrue(
-            edit_post.text == 'Тестовый текст 2'
-            or edit_post.group == self.group.id
-            or edit_post.author == self.author
-        )
+        self.assertTrue(edit_post.text, 'Тестовый текст 2')
+        self.assertTrue(edit_post.group, self.group.id)
+        self.assertTrue(edit_post.author, self.author)
